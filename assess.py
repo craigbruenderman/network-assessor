@@ -39,11 +39,30 @@ def getHostNames(hosts):
 
 
 def getCDPNeighbors(host):
-    doInterrogate(host, "show cdp neigh")
+    out = openSSH.doInterrogate(host, "show cdp neigh")
+    out = out.strip()
+    out = out.split("\n")
+    print "Output:"
+    print out
+    print "\n"
+    iterator = iter(out)
+    for line in iterator:
+        if line.startswith("Device ID") or line.startswith('Device-ID'):
+            neighbor = next(iterator).strip()
+            print neighbor
+
+#'CBTS-LouLab-R1.loulab-cbts.net\r', 'Gig 1/0/43        161              R I   ASR1001-X Gig 0/0/1\r',
+# '5548-1(SSI153207R5)\r', 'Ten 1/1/1         171            R S I C N5K-C5548 Eth 1/7\r', 
+# '5548-1(SSI153207R5)\r', 'Gig 1/0/1         136            R S I C N5K-C5548 mgmt0\r', 
+# '5548-2(SSI153207CN)\r', 'Gig 1/0/2         136            R S I C N5K-C5548 mgmt0\r', 
+# 'localhost        Gig 1/0/14        170               S    VMware ES vmnic0\r', 
+# 'localhost        Gig 1/0/16        170               S    VMware ES vmnic1\r',
+# 'Lou-Lab-Mgmt#']
 
 
 def getVRFs(host):
     out = openSSH.doInterrogate(host, "show vrf detail")
+    out = out.strip()
     out = out.split("\n")
     vrfs = []
     for line in out:    # Iterate on each line in current file
@@ -226,4 +245,4 @@ if __name__ == '__main__':
     #getHostNames(hostList)
 
     for host in hostList:
-        print getVPC(host)
+        getCDPNeighbors(host)
