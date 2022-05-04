@@ -42,20 +42,20 @@ def getCDPNeighbors(host):
     out = openSSH.doInterrogate(host, "show cdp neigh")
     out = out.strip()
     out = out.split("\n")
-    print "Output:"
-    print out
-    print "\n"
+    print("Output:")
+    print(out)
+    print("\n")
     iterator = iter(out)
     for line in iterator:
         if line.startswith("Device ID") or line.startswith('Device-ID'):
             neighbor = next(iterator).strip()
-            print neighbor
+            print(neighbor)
 
 #'CBTS-LouLab-R1.loulab-cbts.net\r', 'Gig 1/0/43        161              R I   ASR1001-X Gig 0/0/1\r',
-# '5548-1(SSI153207R5)\r', 'Ten 1/1/1         171            R S I C N5K-C5548 Eth 1/7\r', 
-# '5548-1(SSI153207R5)\r', 'Gig 1/0/1         136            R S I C N5K-C5548 mgmt0\r', 
-# '5548-2(SSI153207CN)\r', 'Gig 1/0/2         136            R S I C N5K-C5548 mgmt0\r', 
-# 'localhost        Gig 1/0/14        170               S    VMware ES vmnic0\r', 
+# '5548-1(SSI153207R5)\r', 'Ten 1/1/1         171            R S I C N5K-C5548 Eth 1/7\r',
+# '5548-1(SSI153207R5)\r', 'Gig 1/0/1         136            R S I C N5K-C5548 mgmt0\r',
+# '5548-2(SSI153207CN)\r', 'Gig 1/0/2         136            R S I C N5K-C5548 mgmt0\r',
+# 'localhost        Gig 1/0/14        170               S    VMware ES vmnic0\r',
 # 'localhost        Gig 1/0/16        170               S    VMware ES vmnic1\r',
 # 'Lou-Lab-Mgmt#']
 o
@@ -74,9 +74,9 @@ def getVRFs(host):
                 vrfs.append(line[1].translate(None, ","))
     return vrfs
 
-    
+
 def getVPC(host):
-    print openSSH.doInterrogate(host, "show vpc")
+    print(openSSH.doInterrogate(host, "show vpc"))
 
 
 def getVPCRole(host):
@@ -93,7 +93,7 @@ def getVPCConsistency(host):
 
 def getPortChannels(host):
     pass
-    
+
 
 def getIntIPs(host):
     doInterrogate(host, "show ip int bri")
@@ -127,19 +127,19 @@ def getHosts(fileList):
 
 def getProtocols(host):
     doInterrogate(host, "show ip proto")
-    
+
 
 def getPlatform(host):
     doInterrogate(host, "show ver")
 
-        
+
 def getSTPMode(host):
     out = doInterrogate(host, "show spann sum")
     hostname = host["ip"]
     curList = []
     stpModes = []
     for line in out.split("\n"):
-        print line
+        print(line)
         if line.startswith('Switch is in'):
             curList.append(hostname)
             curList.append(line.split(' ')[3])
@@ -155,10 +155,10 @@ def getSTPMode(host):
 
         if re.search('Pathcost method used', line):
             curList.append(line.split(' ')[-1])
-       
+
     out = filter(None, curList)
     return out
-    
+
 
 def getTCNs(**hosts):
     out = doInterrogate(host, "show spann detail")
@@ -170,43 +170,43 @@ def getTCNs(**hosts):
         if line.startswith("VLAN"):
             a = re.findall("^VLAN[0-9]+", line)
             a = a[0].strip()
-        
+
         if line.startswith("Number of topology changes"):
             b = re.findall(" [0-9]+ ", line)
             b = b[0].strip()
             vlans.append([a, b])
     return vlans
-    
+
 
 def printTCNs(hosts):
     list = []
     "Calling getTCN"
-    print hosts
+    print(hosts)
     for host in hosts:
         vlans = getTCNs(host)
         if len(vlans) > 0:
             list.append(vlans)
         else:
-             print "No Active VLANs"   
+             print("No Active VLANs")
         for entry in list:
-            print host['ip']
+            print(host['ip'])
             printTable(entry, ['VLAN', 'TCN Count'])
             list = []
-    
-    
+
+
 def printSTP(hosts):
     list = []
     for host in hosts:
         list.append(getSTPMode(host))
-    print list
+    print(list)
     printTable(list, ['Hostname', 'STP Mode', 'Root For', 'Portfast Default', 'BPDUGuard Default', 'Pathcost Method'])
 
 
 def printTable(myList, headers = None):
     if headers:
-        print tabulate(myList, headers = headers, tablefmt="fancy_grid")
+        print(tabulate(myList, headers = headers, tablefmt="fancy_grid"))
     else:
-        print tabulate(myList, tablefmt="fancy_grid")
+        print(tabulate(myList, tablefmt="fancy_grid"))
 
 
 def openFile(fname):
@@ -214,14 +214,14 @@ def openFile(fname):
         fhand = open(fname)
         return fhand
     except:
-        print 'Unable to open file', fname
+        print('Unable to open file', fname)
         sys.exit(1)
 
 
 def writeCSV(hosts):
     with open('mycsvfile.csv', 'wb') as f:  # Just use 'w' mode in 3.x
         fieldnames = hosts[1].keys()
-        print fieldnames
+        print(fieldnames)
         w = csv.DictWriter(f, fieldnames=fieldnames)
         w.writeheader()
         for host in hosts:
