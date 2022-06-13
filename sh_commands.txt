@@ -1,0 +1,103 @@
+term len 0
+sh ver
+sh inv
+sh mod
+sh powe
+sh proc cpu sorted
+sh proc cpu hist
+sh virtu
+sh licen righ
+sh feature
+sh feature-set
+sh run
+sh ip int bri
+sh ip int bri vrf all
+sh cdp nei
+sh cdp nei det
+sh lldp neigh
+sh lldp neigh det
+sh int desc
+sh int status
+sh int
+sh etherchann sum
+sh port-ch sum
+sh switch detail
+sh switch neigh
+sh switch stack-p
+sh switch stack-r a
+sh switch stack-r s
+! L3
+sh vrf
+sh ip route
+sh route
+sh ip cef
+sh ip proto
+sh ip eigrp interface
+sh ip eigrp nei
+sh ip eigrp traffic
+sh ip eigrp topo
+sh ip ospf
+sh ip ospf stat
+sh ip ospf neigh
+sh ip ospf int
+sh ip ospf topo
+sh ip ospf datab
+sh ip bgp neigh
+sh ip bgp summ
+sh ip bgp
+sh ip access-list
+sh ip prefix-list
+sh route-map
+! NAC
+sh ip admission configuration
+sh eou all
+sh ip admission
+sh ip device tracking
+! L2
+sh vlan sum
+sh vlan bri
+sh spann sum
+sh spann
+sh spann root
+sh spann detail
+sh mac add dyn
+sh ip arp
+! vPC
+sh vpc
+sh vpc brie
+sh vpc consis glob
+! Fabricpath
+sh fabricpath isis adjacency
+sh fabricpath isis database
+sh fabricpath isis database detail
+sh fex
+sh fex detail
+sh otv isis adjacency
+! VXLAN
+sh vxlan
+show nve vxlan-params
+show nve peers
+show nve peer detail
+show nve vni
+show nve internal platform interface detail
+sh bgp internal nve-peer-vni
+show ip mroute detail
+! DMVPN
+sh dmvpn
+sh dmvpn detail
+sh dmvpn static
+! QoS
+sh policy-map system type network-qos
+sh mls qos
+sh mls qos input-queue
+sh mls qos maps cos-input-q
+sh log
+! Voice
+sh Controllers
+sh Voice Port
+sh Clock
+sh sip service
+sh sip-ua register status
+sh sip-ua statistics
+sh sip-ua status
+sh sip-ua timers

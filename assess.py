@@ -5,20 +5,68 @@ import re
 import glob
 import os
 import yaml
-import openSSH
 import csv
 import ipaddress
 import pickle
-import netmiko
 from tabulate import tabulate
+from netmiko import ConnectHandler
+from getpass import getpass
+from pprint import pprint
+from rich import print
 
 
+# Get Protocol Info
+def getProtocols(str):
+    x = re.findall('Routing Protocol is .*', str)
+    print(x)
 
-class NetworkDevice(object):
-    def __init__(self, ip, username, password):
-        self.ip = ip
-        self.username = username
-        self.password = password
+# OSPF Problems
+def check_ospf(str):
+    # Check for stuck in EXSTART
+    x = re.findall('.*EXSTART\/.*', str)
+    if len(x) > 0:
+        print(f'[bold magenta]{f.name}[/bold magenta]')
+        print(":vampire:", x, ":vampire:")
+
+    mtu_ignore_list = []
+    pat = re.compile('(interface Vlan\d{1,4})([\s\w,.\-\(\)\/]+)mtu (\d{1,4})([\s\w,.\-\(\)\/]+)(ip ospf mtu-ignore)')
+    x = re.findall(pat, str)
+    if x:
+        print(f'[bold magenta]{f.name}[/bold magenta]')
+        for match in x:
+            mtu_ignore_list.append( [match[0],match[2]] )
+        print(tabulate(mtu_ignore_list, headers=["Interface", "MTU"]))
+        print("\n")
+            
+
+# VLAN TCNs
+def check_tcns(str, tcn_min):
+    tcn_list = []
+    pat = re.compile('((VLAN\d{1,4}) is executing.*)([\s\w,.\-\(\)\/]+)(Number of topology changes (\d+).*)(occurred\s(.*)ago\n)(\s*from\s(.*))')
+    x = re.findall(pat, str)
+    for match in x:
+        num_tcns = match[4].strip()
+        if int(num_tcns) > tcn_min:
+            tcn_list.append([match[1].strip(), num_tcns, match[6].strip(), match[8].strip()])
+    
+    tcn_list = sorted(tcn_list, key = lambda x: int(x[1]), reverse=True)
+    if len(tcn_list) > 0:
+        print(tabulate(tcn_list, headers=["VLAN ID", "# TCNs", "Last TCN Time", "Interface"]))
+        print("\n")
+
+
+def readOutputs(directory):
+    outputList = []
+    for filename in os.listdir(directory):
+        f = os.path.join(directory, filename)
+        # Check if it is a file
+        if os.path.isfile(f):
+            f = open(f, "r")
+            str = f.read()
+            str = str.strip()
+            outputList.append(str)
+            f.close()
+    return outputList
 
 
 def readHosts():
@@ -26,6 +74,11 @@ def readHosts():
     hostDict = yaml.load(f)
     f.close()
     return hostDict
+
+
+def runCommand(device, command):
+    ssh = ConnectHandler(**device)
+    return ssh.send_command(command)
 
 
 def printHosts(hosts):
@@ -53,13 +106,6 @@ def getCDPNeighbors(host):
             neighbor = next(iterator).strip()
             print(neighbor)
 
-#'CBTS-LouLab-R1.loulab-cbts.net\r', 'Gig 1/0/43        161              R I   ASR1001-X Gig 0/0/1\r',
-# '5548-1(SSI153207R5)\r', 'Ten 1/1/1         171            R S I C N5K-C5548 Eth 1/7\r',
-# '5548-1(SSI153207R5)\r', 'Gig 1/0/1         136            R S I C N5K-C5548 mgmt0\r',
-# '5548-2(SSI153207CN)\r', 'Gig 1/0/2         136            R S I C N5K-C5548 mgmt0\r',
-# 'localhost        Gig 1/0/14        170               S    VMware ES vmnic0\r',
-# 'localhost        Gig 1/0/16        170               S    VMware ES vmnic1\r',
-# 'Lou-Lab-Mgmt#']
 
 def getVRFs(host):
     out = openSSH.doInterrogate(host, "show vrf detail")
@@ -229,21 +275,53 @@ def writeCSV(hosts):
             w.writerow(host)
 
 
+def collectOutput(devices):
+    for d in devices:
+        # New file per device
+        name = d.get('host')
+        fo = open(f'output/{name}.txt', "w")
+        # Connect to device
+        ssh = ConnectHandler(**d)
+        for line in config_commands:
+            output = ssh.send_command(line)
+            # Write outputs, per device
+            fo.write(f'-------\n{line}-------\n')
+            fo.write(output)
+
 
 if __name__ == '__main__':
 
-    # Setup list of devices
-    # This is a dictionary
-    hostDict = readHosts()
-    hostList = []
+    directory = 'output'
+    password = getpass()
+    username = "craigb"
 
-    #Create a list containing hosts as NetworkDevice objects
-    for k, v in hostDict.iteritems():
-        hostObj = NetworkDevice(k, v["username"], v["password"])
-        hostList.append(hostObj)
+    sw1 = {
+        'device_type': 'cisco_ios',
+        'host': '192.168.10.1',
+        'username': username,
+        'password': password,
+    }
 
-    printHosts(hostList)
-    #getHostNames(hostList)
+    ap1 = {
+        'device_type': 'cisco_ios',
+        'host': '192.168.11.11',
+        'username': username,
+        'password': password,
+    }
 
-    for host in hostList:
-        getCDPNeighbors(host)
+    devices = [sw1, ap1]
+
+    f = open("sh_commands.txt", "r")
+    config_commands = f.readlines()
+
+    #collectOutput(devices)
+
+    outputs = readOutputs(directory)
+    for o in outputs:
+        print("-" * 40)
+        print(re.search('hostname\s(.*)', o).group())
+        print("-" * 40, "\n")
+        check_tcns(o, 1)
+        check_ospf(o)
+
+    #check_tcns()
