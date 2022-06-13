@@ -9,7 +9,9 @@ import openSSH
 import csv
 import ipaddress
 import pickle
+import netmiko
 from tabulate import tabulate
+
 
 
 class NetworkDevice(object):
@@ -58,7 +60,6 @@ def getCDPNeighbors(host):
 # 'localhost        Gig 1/0/14        170               S    VMware ES vmnic0\r',
 # 'localhost        Gig 1/0/16        170               S    VMware ES vmnic1\r',
 # 'Lou-Lab-Mgmt#']
-o
 
 def getVRFs(host):
     out = openSSH.doInterrogate(host, "show vrf detail")
