@@ -10,6 +10,8 @@ sh licen righ
 sh feature
 sh feature-set
 sh run
+sh ntp status
+sh ntp associ det
 sh ip int bri
 sh ip int bri vrf all
 sh cdp nei
@@ -26,6 +28,9 @@ sh switch neigh
 sh switch stack-p
 sh switch stack-r a
 sh switch stack-r s
+! Wifi
+sh dot11 bssid
+sh dot11 assoc
 ! L3
 sh vrf
 sh ip route
