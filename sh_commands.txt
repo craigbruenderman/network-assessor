@@ -58,6 +58,9 @@ sh ip admission configuration
 sh eou all
 sh ip admission
 sh ip device tracking
+sh cts role-based sgt-map all
+sh cts role-based permissions
+sh cts role-based counters
 ! L2
 sh vlan sum
 sh vlan bri
