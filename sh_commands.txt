@@ -58,6 +58,24 @@ sh ip admission configuration
 sh eou all
 sh ip admission
 sh ip device tracking
+show cts authorization entries
+show cts credentials
+show cts environment-data
+show cts interface
+show cts macsec
+show cts pacs
+show cts policy peer
+show cts policy layer3
+show cts provisioning
+show cts rbacl
+show cts role-based sgt-map
+show cts role-based counters
+show cts role-based flow
+show cts role-based permissions
+show cts server-list
+show cts sxp
+show cts keystore
+show platform cts reflector
 ! L2
 sh vlan sum
 sh vlan bri
