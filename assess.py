@@ -72,7 +72,7 @@ def printHosts(hosts):
 def runCommand(device, command):
     ssh = ConnectHandler(**device)
     return ssh.send_command(command)
-    
+
 ### Wifi items
 
 def checkSSIDs(o):
@@ -94,18 +94,23 @@ def checkVPC(o):
     console.print("VPC")
     #x = re.search('vPC domain id\s+:\s+(\d+)', o)
     #if x: print(x.group(0))
-    
+
     x = re.search('Peer status\s+:\s((?:\S|\s(?!\s))*)', o)
     if x and "ok" not in x.group(1): console.print(x.group(0), style="bold red")
 
     #x = re.search('Number of vPCs configured\s+:\s(.*)', o)
     #if x: print(x.group(0))
-    
+
     x = re.search('Type-2 consistency status\s+:\s(.*)', o)
     if x and "success" not in x.group(1): console.print(x.group(0), style="bold red")
 
     x = re.search('Type-2 inconsistency reason\s+:\s(.*)', o)
     if x: console.print(x.group(0), style="bold red")
+
+
+def checkVPCRole(o):
+    x = re.search('(vPC role)\s+:\s+(\w+)', o)
+    if x : console.print("VPC Role:", x.group(2), style="bold red")
 
 
 # VLAN TCNs
@@ -116,7 +121,7 @@ def check_tcns(o, tcn_min):
         num_tcns = match[4].strip()
         if int(num_tcns) > tcn_min:
             tcn_list.append([match[1].strip(), num_tcns, match[6].strip(), match[8].strip()])
-    
+
     tcn_list = sorted(tcn_list, key = lambda x: int(x[1]), reverse=True)
     if len(tcn_list) > 0:
         print(tabulate(tcn_list, headers=["VLAN ID", "# TCNs", "Last TCN Time", "Interface"]))
@@ -140,6 +145,39 @@ def getTCNs(**hosts):
             b = b[0].strip()
             vlans.append([a, b])
     return vlans
+
+
+## Layer 3 ##
+
+def getVRFs(hosts):
+    ```
+    sh vrf
+    VRF-Name                           VRF-ID State   Reason                        
+    Admin                                   9 Up      --
+    FAB                                     8 Up      --
+    FAC                                     6 Up      --
+    Labs                                   14 Up      --
+    MASK                                    7 Up      --
+    NECTAR                                  3 Up      --
+    QSARR                                  13 Up      --
+    SEC                                    10 Up      --
+    SITECL                                  4 Up      --
+    SITESRV                                 5 Up      --
+    SITEUSGFSRV                            15 Up      --
+    default                                 1 Up      --
+    keepalive                              11 Up      --
+    management                              2 Up      --
+    ```
+
+
+def checkIntIPs(o):
+    ```
+    sh ip int bri vrf all
+    IP Interface Status for VRF "default"(1)
+    Interface            IP Address      Interface Status
+    Vlan501              10.40.252.8     protocol-up/link-up/admin-up
+    Vlan511              10.40.15.28     protocol-up/link-up/admin-up
+    ```
 
 
 # Get Protocol Info
@@ -196,36 +234,8 @@ def getCDPNeighbors(host):
             print(neighbor)
 
 
-def getVRFs(hosts):
-    vrfs = []
-    for d in devices:
-        # New file per device
-        name = d.get('host')
-        #fo = open(f'output/{name}.txt', "w")
-        # Connect to device
-        ssh = ConnectHandler(**d)
-        output = ssh.send_command("show vrf detail")
-        # Write outputs, per device
-        #fo.write(f'-------\n{line}-------\n')
-        #fo.write(output)
-        print(f'-------\n{name}\n-------\n')
-        print(output)
-
-
-def getVPCRole(host):
-    doInterrogate(host, "show vpc role")
-
-
 def getOrphanPorts(host):
     doInterrogate(host, "sh vpc orphan-ports")
-
-
-def getPortChannels(host):
-    pass
-
-
-def getIntIPs(host):
-    doInterrogate(host, "show ip int bri")
 
 
 def getHosts(fileList):
@@ -329,6 +339,7 @@ if __name__ == '__main__':
         rprint(Panel(file))
         #check_tcns(o, 500)
         #checkVPC(o)
-        checkOSPFProcesses(o)
+        checkVPCRole(o)
+        #checkOSPFProcesses(o)
         #checkOSPFDetail(o)
         #checkAssoc(o)
