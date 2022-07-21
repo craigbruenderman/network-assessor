@@ -1,0 +1,39 @@
+---
+- name: Gather legacy and resource facts
+  cisco.ios.ios_facts:
+    gather_subset: all
+    gather_network_resources: all
+
+  tasks:
+
+    - name: print output
+      debug:
+        var: ansible_facts.net_neighbors
+
+    - name: print image
+      debug:
+        var: ansible_facts.net_image
+
+    - name: print serial
+      debug:
+        var: ansible_facts.net_serialnum
+
+# tasks:
+#
+# - name: Set IOS Interface Description
+#   ios_config:
+#     lines:
+#       - description Connected to {{ item.value[0].host }} via its {{ item.value[0].port }}
+#     parents: interface {{ item.key }}
+#     save_when: changed
+#   with_dict: "{{ ansible_facts.net_neighbors }}"
+#   when: ansible_network_os == 'ios'
+#
+# - name: Set NXOS Interface Description
+#   nxos_config:
+#     lines:
+#       - description Connected to {{ item.value[0].host }} via its {{ item.value[0].port }}
+#     parents: interface {{ item.key }}
+#     save_when: changed
+#   with_dict: "{{ansible_facts.net_neighbors }}"
+#   when: ansible_network_os == 'nxos'

@@ -13,8 +13,10 @@ from tabulate import tabulate
 from netmiko import ConnectHandler
 from getpass import getpass
 from pprint import pprint
-from rich import print
-
+from rich import print as rprint
+from rich.console import Console
+from rich.markdown import Markdown
+from rich.panel import Panel
 
 # Gather show command outputs via Netmiko
 def collectOutput(devices):
@@ -33,7 +35,7 @@ def collectOutput(devices):
 
 # Read in saved output files from specified directory
 def readOutputs(directory):
-    outputList = []
+    outputDict = dict()
     for filename in os.listdir(directory):
         f = os.path.join(directory, filename)
         # Check if it is a file
@@ -41,9 +43,9 @@ def readOutputs(directory):
             f = open(f, "r")
             str = f.read()
             str = str.strip()
-            outputList.append(str)
+            outputDict[filename] = str
             f.close()
-    return outputList
+    return outputDict
 
 
 def getConfigList():
@@ -89,11 +91,21 @@ def checkAssoc(o):
 
 # Check for VPC problems
 def checkVPC(o):
-    vpcList = []
-    x = re.search('vPC domain id\s+:\s+(\d+)', o)
-    if x: print(x.group(0))
-    x = re.search('Peer status\s+:\s(.*)', o)
-    if x: print(x.group(0))
+    console.print("VPC")
+    #x = re.search('vPC domain id\s+:\s+(\d+)', o)
+    #if x: print(x.group(0))
+    
+    x = re.search('Peer status\s+:\s((?:\S|\s(?!\s))*)', o)
+    if x and "ok" not in x.group(1): console.print(x.group(0), style="bold red")
+
+    #x = re.search('Number of vPCs configured\s+:\s(.*)', o)
+    #if x: print(x.group(0))
+    
+    x = re.search('Type-2 consistency status\s+:\s(.*)', o)
+    if x and "success" not in x.group(1): console.print(x.group(0), style="bold red")
+
+    x = re.search('Type-2 inconsistency reason\s+:\s(.*)', o)
+    if x: console.print(x.group(0), style="bold red")
 
 
 # VLAN TCNs
@@ -136,7 +148,8 @@ def checkProtocols(str):
     print(x)
 
 
-# Get Protocol Info
+# OSPF
+
 def checkOSPFDetail(o):
     x = re.findall('Reference bandwidth unit is.*', o)
     print(x)
@@ -145,14 +158,20 @@ def checkOSPFDetail(o):
     print(tabulate(x, headers=["Area", "Area ID", "Num Interfaces"]))
 
 
-# OSPF Problems
-def checkOSPF(o):
+def checkOSPFProcesses(o):
+    x = re.findall('Routing Process (.*|\".*\S*.*\") with ID (\d+.\d+.\d+.\d+)(?:\sVRF)?(\s\w+)?', o)
+    if x: print(tabulate(x, headers=["Process ID", "Area ID", "VRF"]))
+
+
+def checkOSPFStuck(o):
     # Check for stuck in EXSTART
     x = re.findall('.*EXSTART\/.*', o)
     if len(x) > 0:
-        print(f'[bold magenta]{f.name}[/bold magenta]')
-        print(":vampire:", x, ":vampire:")
+        rprint(f'[bold magenta]{f.name}[/bold magenta]')
+        rprint(":vampire:", x, ":vampire:")
 
+
+def checkOSPFMTU(o):
     mtu_ignore_list = []
     x = re.findall('(interface Vlan\d{1,4})([\s\w,.\-\(\)\/]+)mtu (\d{1,4})([\s\w,.\-\(\)\/]+)(ip ospf mtu-ignore)', o)
     if x:
@@ -161,7 +180,7 @@ def checkOSPF(o):
             mtu_ignore_list.append( [match[0],match[2]] )
         print(tabulate(mtu_ignore_list, headers=["Interface", "MTU"]))
         print("\n")
-            
+
 
 def getCDPNeighbors(host):
     out = openSSH.doInterrogate(host, "show cdp neigh")
@@ -199,10 +218,6 @@ def getVPCRole(host):
 
 def getOrphanPorts(host):
     doInterrogate(host, "sh vpc orphan-ports")
-
-
-def getVPCConsistency(host):
-    doInterrogate(host, "sh vpc consistency-parameters global")
 
 
 def getPortChannels(host):
@@ -296,61 +311,24 @@ def writeCSV(hosts):
 
 if __name__ == '__main__':
 
-    directory = ""
+    directory = "/Users/craigb/Library/CloudStorage/OneDrive-CincinnatiBellTelephoneCompany,LLC/CBTS/Customers/Global Foundries/Data"
     #directory = "output"
     password = "test"
     #password = getpass()
     username = "craigb"
 
-    sw1 = {
-        'device_type': 'cisco_ios',
-        'host': '192.168.10.1',
-        'username': username,
-        'password': password,
-    }
-
-    ap1 = {
-        'device_type': 'cisco_ios',
-        'host': '192.168.11.11',
-        'username': username,
-        'password': password,
-    }
-
-    ap2 = {
-        'device_type': 'cisco_ios',
-        'host': '192.168.11.12',
-        'username': username,
-        'password': password,
-    }
-
-    ap3 = {
-        'device_type': 'cisco_ios',
-        'host': '192.168.11.13',
-        'username': username,
-        'password': password,
-    }
-
-    ap4 = {
-        'device_type': 'cisco_ios',
-        'host': '192.168.11.14',
-        'username': username,
-        'password': password,
-    }
-
-    devices = [sw1, ap1, ap2, ap3, ap4]
-
     f = open("sh_commands.txt", "r")
     config_commands = f.readlines()
+    console = Console()
 
+    # Run once to collect device outputs
     #collectOutput(devices)
 
     outputs = readOutputs(directory)
-    for o in outputs:
-        print("-" * 40)
-        print(re.search('hostname\s(.*)', o).group())
-        print("-" * 40, "\n")
-        checkVPC(o)
-        #check_tcns(o, 50)
-        checkOSPF(o)
-        checkOSPFDetail(o)
+    for file, o in outputs.items():
+        rprint(Panel(file))
+        #check_tcns(o, 500)
+        #checkVPC(o)
+        checkOSPFProcesses(o)
+        #checkOSPFDetail(o)
         #checkAssoc(o)

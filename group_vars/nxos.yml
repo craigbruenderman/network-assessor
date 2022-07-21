@@ -1,0 +1,5 @@
+
+ansible_network_os: nxos
+ansible_user: admin
+ansible_password: admin
+ansible_connection: network_cli

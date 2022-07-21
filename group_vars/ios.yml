@@ -1,0 +1,5 @@
+
+ansible_network_os: ios
+ansible_user: craigb
+ansible_password: omEQ37!
+ansible_connection: network_cli
