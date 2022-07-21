@@ -150,9 +150,9 @@ def getTCNs(**hosts):
 ## Layer 3 ##
 
 def getVRFs(hosts):
-    ```
+    '''
     sh vrf
-    VRF-Name                           VRF-ID State   Reason                        
+    VRF-Name                           VRF-ID State   Reason
     Admin                                   9 Up      --
     FAB                                     8 Up      --
     FAC                                     6 Up      --
@@ -167,17 +167,17 @@ def getVRFs(hosts):
     default                                 1 Up      --
     keepalive                              11 Up      --
     management                              2 Up      --
-    ```
+    '''
 
 
 def checkIntIPs(o):
-    ```
+    '''
     sh ip int bri vrf all
     IP Interface Status for VRF "default"(1)
     Interface            IP Address      Interface Status
     Vlan501              10.40.252.8     protocol-up/link-up/admin-up
     Vlan511              10.40.15.28     protocol-up/link-up/admin-up
-    ```
+    '''
 
 
 # Get Protocol Info
